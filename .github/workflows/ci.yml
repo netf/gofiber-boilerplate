@@ -15,16 +15,14 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.23'
+      - name: Install dependencies
+        run: go mod download
       - name: Install Swag
         run: go install github.com/swaggo/swag/cmd/swag@latest
       - name: Add Swag to PATH
         run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-      - name: List directory contents
-        run: ls -R
-      - name: Generate Swagger Docs
-        run: |
-          pwd
-          swag init -g ./cmd/main.go -o ./docs --parseDependency --parseInternal
+      # - name: Generate Swagger Docs
+      #   run: swag init -g cmd/main.go -o ./docs --parseDependency --parseInternal
       - name: Build
         run: go build -o ./bin/app ./cmd/main.go
       - name: Test
