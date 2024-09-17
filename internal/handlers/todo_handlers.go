@@ -3,9 +3,10 @@ package handlers
 import (
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/netf/gofiber-boilerplate/internal/models"
 	"github.com/netf/gofiber-boilerplate/internal/services"
-	"github.com/netf/gofiber-boilerplate/internal/validators"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -25,11 +26,15 @@ import (
 // @BasePath /api/v1
 
 type TodoHandler struct {
-	service services.TodoService
+	service  services.TodoService
+	validate *validator.Validate
 }
 
 func NewTodoHandler(service services.TodoService) *TodoHandler {
-	return &TodoHandler{service}
+	return &TodoHandler{
+		service:  service,
+		validate: validator.New(),
+	}
 }
 
 // CreateTodo creates a new todo item
@@ -53,7 +58,7 @@ func (h *TodoHandler) CreateTodo(c *fiber.Ctx) error {
 	}
 
 	// Validate the request
-	if err := validators.Validate.Struct(&todo); err != nil {
+	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
@@ -137,7 +142,7 @@ func (h *TodoHandler) UpdateTodo(c *fiber.Ctx) error {
 	}
 
 	// Validate the request
-	if err := validators.Validate.Struct(&todo); err != nil {
+	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),

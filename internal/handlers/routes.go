@@ -7,16 +7,12 @@ import (
 	"github.com/netf/gofiber-boilerplate/internal/auth"
 	"github.com/netf/gofiber-boilerplate/internal/repositories"
 	"github.com/netf/gofiber-boilerplate/internal/services"
-	"github.com/netf/gofiber-boilerplate/internal/validators"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 func RegisterRoutes(router fiber.Router, db *gorm.DB, cfg *config.Config) {
-	// Initialize validator
-	validators.InitValidator()
-
 	// JWT Middleware
 	authMiddleware := auth.JWTProtected(cfg.JWTSecret)
 

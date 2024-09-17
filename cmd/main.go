@@ -2,12 +2,15 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/netf/gofiber-boilerplate/config"
 	_ "github.com/netf/gofiber-boilerplate/docs"
 	"github.com/netf/gofiber-boilerplate/internal/db"
 	"github.com/netf/gofiber-boilerplate/internal/handlers"
 	"github.com/netf/gofiber-boilerplate/internal/middleware"
+	"github.com/netf/gofiber-boilerplate/internal/monitoring"
 
 	"github.com/gofiber/fiber/v2"
 	swagger "github.com/gofiber/swagger"
@@ -36,8 +39,8 @@ func main() {
 
 	// Initialize Sentry (optional)
 	if cfg.SentryDSN != "" {
-		middleware.InitSentry(cfg.SentryDSN)
-		defer middleware.FlushSentry()
+		monitoring.InitSentry(cfg.SentryDSN)
+		defer monitoring.FlushSentry()
 	}
 
 	// Initialize database
@@ -61,6 +64,9 @@ func main() {
 	app.Use(middleware.Logger())
 	app.Use(middleware.SecureHeaders())
 	app.Use(middleware.CORSMiddleware())
+	app.Use(middleware.Compress())
+	app.Use(middleware.RateLimiter())
+	app.Use(middleware.RequestID())
 
 	// API versioning
 	api := app.Group("/api")
@@ -75,11 +81,28 @@ func main() {
 		DeepLinking: false,
 	}))
 
+	// Health check endpoint
+	// app.Get("/health", handlers.HealthCheck)
+
+	// Graceful shutdown
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+		<-quit
+		log.Info().Msg("Gracefully shutting down...")
+		if err := app.Shutdown(); err != nil {
+			log.Error().Err(err).Msg("Server forced to shutdown")
+		}
+		log.Info().Msg("Server exiting")
+	}()
+
 	// Start server
 	log.Info().Msgf("Starting server on %s", cfg.ServerAddress)
 	if err := app.Listen(cfg.ServerAddress); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
 	}
+
+	log.Info().Msg("Running cleanup tasks...")
 }
 
 func setupLogging(level string) {

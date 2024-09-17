@@ -9,6 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +20,13 @@ func Logger() fiber.Handler {
 		err := c.Next()
 		stop := time.Now()
 
+		requestID := c.GetRespHeader("X-Request-ID")
+		if requestID == "" {
+			requestID = "unknown"
+		}
+
 		log.Info().
+			Str("request_id", requestID).
 			Str("method", c.Method()).
 			Str("path", c.Path()).
 			Int("status", c.Response().StatusCode()).
@@ -87,17 +95,13 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	})
 }
 
-func InitSentry(dsn string) {
-	err := sentry.Init(sentry.ClientOptions{
-		Dsn: dsn,
+func RateLimiter() fiber.Handler {
+	return limiter.New(limiter.Config{
+		Max:        100,
+		Expiration: 1 * time.Minute,
 	})
-	if err != nil {
-		log.Error().Err(err).Msg("Sentry initialization failed")
-	} else {
-		log.Info().Msg("Sentry initialized")
-	}
 }
 
-func FlushSentry() {
-	sentry.Flush(2 * time.Second)
+func RequestID() fiber.Handler {
+	return requestid.New()
 }
