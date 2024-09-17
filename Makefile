@@ -32,3 +32,7 @@ docker-up:
 
 docker-down:
 	docker-compose -f docker/docker-compose.yml down
+
+setup-pre-commit:
+	pip install pre-commit
+	pre-commit install
