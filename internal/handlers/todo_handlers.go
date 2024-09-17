@@ -4,13 +4,12 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-
-	"github.com/netf/gofiber-boilerplate/internal/models"
-	"github.com/netf/gofiber-boilerplate/internal/services"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+
+	"github.com/netf/gofiber-boilerplate/internal/models"
+	"github.com/netf/gofiber-boilerplate/internal/services"
 )
 
 // Package handlers contains the HTTP handlers for the API
@@ -57,7 +56,6 @@ func (h *TodoHandler) CreateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validate the request
 	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -72,7 +70,10 @@ func (h *TodoHandler) CreateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(todo)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "Todo created successfully",
+		"todo":    todo,
+	})
 }
 
 // GetTodoByID retrieves a todo item by ID
@@ -141,7 +142,6 @@ func (h *TodoHandler) UpdateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validate the request
 	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -157,7 +157,10 @@ func (h *TodoHandler) UpdateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(todo)
+	return c.JSON(fiber.Map{
+		"message": "Todo updated successfully",
+		"todo":    todo,
+	})
 }
 
 // DeleteTodo deletes a todo item
