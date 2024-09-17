@@ -1,0 +1,19 @@
+# Config file for Air (Live reloading)
+# https://github.com/cosmtrek/air
+
+[build]
+  cmd = "go build -o ./bin/air-app cmd/main.go"
+  bin = "./bin/air-app"
+  full_bin = "./bin/air-app"
+  exclude_dir = ["docs", "docker", "migrations"]
+  exclude_file = ["*.md"]
+
+[log]
+  time = true
+
+[dirs]
+  watch_dir = ["."]
+  exclude_dir = ["docs", "docker", "migrations", "bin", "pkg", "tests"]
+
+[dev]
+  delay = 1000 # in milliseconds
