@@ -19,11 +19,15 @@ jobs:
         run: go install github.com/swaggo/swag/cmd/swag@latest
       - name: Add Swag to PATH
         run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      - name: List directory contents
+        run: ls -R
       - name: Generate Swagger Docs
-        run: make swag
+        run: |
+          pwd
+          swag init -g ./cmd/main.go -o ./docs --parseDependency --parseInternal
       - name: Build
-        run: make build
+        run: go build -o ./bin/app ./cmd/main.go
       - name: Test
-        run: make test
+        run: go test ./...
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3

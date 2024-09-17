@@ -13,7 +13,8 @@ migrate-down:
 	migrate -database $(DATABASE_URL) -path migrations down
 
 swag:
-	swag init -g cmd/main.go -o ./docs --parseDependency --parseInternal
+	which swag || go install github.com/swaggo/swag/cmd/swag@latest
+	swag init -g ./cmd/main.go -o ./docs --parseDependency --parseInternal
 
 test:
 	go test ./...
