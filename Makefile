@@ -1,7 +1,7 @@
 .PHONY: build run migrate-up migrate-down test clean swag docker-build docker-run docker-up docker-down
 
-build:
-	go build -o bin/golang-fiber-boilerplate cmd/main.go
+build: swag
+	go build -o ./bin/app ./cmd/main.go
 
 run: build
 	./bin/golang-fiber-boilerplate
@@ -13,7 +13,7 @@ migrate-down:
 	migrate -database $(DATABASE_URL) -path migrations down
 
 swag:
-	swag init -g cmd/main.go --output docs --parseDependency --parseInternal
+	swag init -g cmd/main.go -o ./docs --parseDependency --parseInternal
 
 test:
 	go test ./...
