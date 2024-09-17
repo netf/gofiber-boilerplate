@@ -60,6 +60,7 @@ func main() {
 	app.Use(middleware.Recover())
 	app.Use(middleware.Logger())
 	app.Use(middleware.SecureHeaders())
+	app.Use(middleware.CORSMiddleware())
 
 	// API versioning
 	api := app.Group("/api")
@@ -69,7 +70,10 @@ func main() {
 	handlers.RegisterRoutes(v1, database, cfg)
 
 	// Swagger documentation route
-	app.Get("/swagger/*", swagger.HandlerDefault)
+	app.Get("/swagger/*", swagger.New(swagger.Config{
+		URL:         "/swagger/doc.json",
+		DeepLinking: false,
+	}))
 
 	// Start server
 	log.Info().Msgf("Starting server on %s", cfg.ServerAddress)

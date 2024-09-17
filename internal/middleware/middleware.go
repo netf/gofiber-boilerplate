@@ -8,6 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -50,12 +51,20 @@ func Recover() fiber.Handler {
 
 func SecureHeaders() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		c.Set("Content-Security-Policy", "default-src 'self'")
+		c.Set("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:")
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("X-Frame-Options", "DENY")
 		c.Set("X-XSS-Protection", "1; mode=block")
 		return c.Next()
 	}
+}
+
+func CORSMiddleware() fiber.Handler {
+	return cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	})
 }
 
 func Compress() fiber.Handler {

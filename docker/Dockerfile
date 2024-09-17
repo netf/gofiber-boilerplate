@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.19-alpine
+FROM golang:1.23-alpine
 
 RUN apk add --no-cache git
 
@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . ./
 
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
 EXPOSE 8080
 

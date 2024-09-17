@@ -13,23 +13,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterRoutes(app *fiber.App, db *gorm.DB, cfg *config.Config) {
+func RegisterRoutes(router fiber.Router, db *gorm.DB, cfg *config.Config) {
 	// Initialize validator
 	validators.InitValidator()
 
 	// JWT Middleware
 	authMiddleware := auth.JWTProtected(cfg.JWTSecret)
 
-	// API group
-	api := app.Group("/api/v1")
-
 	// Unprotected routes
-	api.Get("/health", func(c *fiber.Ctx) error {
+	router.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(http.StatusOK).JSON(fiber.Map{"status": "OK"})
 	})
 
 	// Todo routes
-	registerTodoRoutes(api, db, authMiddleware)
+	registerTodoRoutes(router, db, authMiddleware)
 }
 
 func registerTodoRoutes(r fiber.Router, db *gorm.DB, authMiddleware fiber.Handler) {
