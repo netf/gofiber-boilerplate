@@ -199,7 +199,7 @@ func (h *TodoHandler) DeleteTodo(c *fiber.Ctx) error {
 // @Produce json
 // @Param page query int false "Page number" default(1)
 // @Param page_size query int false "Page size" default(10)
-// @Success 200 {object} PaginatedTodoResponse
+// @Success 200 {object} types.PagedResponse[models.Todo]
 // @Failure 400 {object} fiber.Map
 // @Failure 500 {object} fiber.Map
 // @Router /todos [get]
