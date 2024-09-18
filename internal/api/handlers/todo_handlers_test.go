@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	apiUtils "github.com/netf/gofiber-boilerplate/internal/api/utils"
 	"github.com/netf/gofiber-boilerplate/internal/models"
-	"github.com/netf/gofiber-boilerplate/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
@@ -147,7 +147,7 @@ func TestListTodos(t *testing.T) {
 	handler := NewTodoHandler(mockService)
 
 	app := fiber.New()
-	app.Get("/todos", handler.ListTodos)
+	app.Get("/api/v1/todos", handler.ListTodos)
 
 	testCases := []struct {
 		name           string
@@ -223,19 +223,36 @@ func TestListTodos(t *testing.T) {
 				tc.setupMock(mockService)
 			}
 
-			req := httptest.NewRequest("GET", "/todos"+tc.query, nil)
+			req := httptest.NewRequest("GET", "/api/v1/todos"+tc.query, nil)
 			resp, _ := app.Test(req)
 
 			assert.Equal(t, tc.expectedStatus, resp.StatusCode)
 
 			if tc.expectedStatus == fiber.StatusOK {
-				var result types.PagedResponse[models.Todo]
+				var result apiUtils.PagedResponse[models.Todo]
 				err := json.NewDecoder(resp.Body).Decode(&result)
 				assert.NoError(t, err)
 
 				assert.Equal(t, tc.mockTodos, result.Data)
-				assert.Equal(t, tc.mockTotal, result.TotalItems)
-				assert.Greater(t, result.TotalPages, 0)
+				assert.Equal(t, tc.mockTotal, result.Meta.TotalItems)
+				assert.Greater(t, result.Meta.TotalPages, 0)
+				assert.NotNil(t, result.Links)
+				assert.NotEmpty(t, result.Links.Self)
+				assert.NotEmpty(t, result.Links.First)
+				assert.NotEmpty(t, result.Links.Last)
+
+				// Additional checks for pagination logic
+				if tc.query == "" {
+					assert.Equal(t, 1, result.Meta.Page)
+					assert.Equal(t, 10, result.Meta.PageSize)
+					assert.Empty(t, result.Links.Prev)
+					assert.Empty(t, result.Links.Next)
+				} else if tc.query == "?page=2&page_size=5" {
+					assert.Equal(t, 2, result.Meta.Page)
+					assert.Equal(t, 5, result.Meta.PageSize)
+					assert.NotEmpty(t, result.Links.Prev)
+					assert.Empty(t, result.Links.Next)
+				}
 			}
 
 			mockService.AssertExpectations(t)

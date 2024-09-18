@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"math"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -9,9 +8,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
+	apiUtils "github.com/netf/gofiber-boilerplate/internal/api/utils"
 	"github.com/netf/gofiber-boilerplate/internal/models"
 	"github.com/netf/gofiber-boilerplate/internal/services"
-	"github.com/netf/gofiber-boilerplate/internal/types"
 )
 
 // Package handlers contains the HTTP handlers for the API
@@ -199,7 +198,7 @@ func (h *TodoHandler) DeleteTodo(c *fiber.Ctx) error {
 // @Produce json
 // @Param page query int false "Page number" default(1)
 // @Param page_size query int false "Page size" default(10)
-// @Success 200 {object} types.PagedResponse[models.Todo]
+// @Success 200 {object} utils.PagedResponse[models.Todo]
 // @Failure 400 {object} fiber.Map
 // @Failure 500 {object} fiber.Map
 // @Router /todos [get]
@@ -221,13 +220,6 @@ func (h *TodoHandler) ListTodos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch todos"})
 	}
 
-	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-
-	return c.JSON(types.PagedResponse[models.Todo]{
-		Data:       todos,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalItems: total,
-		TotalPages: totalPages,
-	})
+	response := apiUtils.CreatePagedResponse(c, todos, page, pageSize, total)
+	return c.JSON(response)
 }

@@ -14,6 +14,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Add a new function to set up all middlewares
+func SetupMiddlewares(app *fiber.App) {
+	app.Use(Recover())
+	app.Use(Logger())
+	app.Use(SecureHeaders())
+	app.Use(CORSMiddleware())
+	app.Use(Compress())
+	app.Use(RateLimiter())
+	app.Use(RequestID())
+}
+
 func Logger() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/netf/gofiber-boilerplate/config"
-	"github.com/netf/gofiber-boilerplate/internal/auth"
+	"github.com/netf/gofiber-boilerplate/internal/api/auth"
 	"github.com/netf/gofiber-boilerplate/internal/repositories"
 	"github.com/netf/gofiber-boilerplate/internal/services"
 

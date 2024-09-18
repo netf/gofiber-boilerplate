@@ -7,9 +7,9 @@ import (
 
 	"github.com/netf/gofiber-boilerplate/config"
 	_ "github.com/netf/gofiber-boilerplate/docs"
+	"github.com/netf/gofiber-boilerplate/internal/api/middleware"
+	"github.com/netf/gofiber-boilerplate/internal/api/routes"
 	"github.com/netf/gofiber-boilerplate/internal/db"
-	"github.com/netf/gofiber-boilerplate/internal/handlers"
-	"github.com/netf/gofiber-boilerplate/internal/middleware"
 	"github.com/netf/gofiber-boilerplate/internal/monitoring"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,20 +60,14 @@ func main() {
 	})
 
 	// Setup middlewares
-	app.Use(middleware.Recover())
-	app.Use(middleware.Logger())
-	app.Use(middleware.SecureHeaders())
-	app.Use(middleware.CORSMiddleware())
-	app.Use(middleware.Compress())
-	app.Use(middleware.RateLimiter())
-	app.Use(middleware.RequestID())
+	middleware.SetupMiddlewares(app)
 
 	// API versioning
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
 
-	// Register routes with dependency injection
-	handlers.RegisterRoutes(v1, database, cfg)
+	// Register routes
+	routes.RegisterRoutes(v1, database, cfg)
 
 	// Swagger documentation route
 	app.Get("/swagger/*", swagger.New(swagger.Config{
