@@ -43,38 +43,33 @@ func NewTodoHandler(service services.TodoService) *TodoHandler {
 // @Accept json
 // @Produce json
 // @Param todo body models.Todo true "Todo item"
-// @Success 201 {object} models.Todo
-// @Failure 400 {object} fiber.Map
-// @Failure 500 {object} fiber.Map
+// @Success 201 {object} apiUtils.Response[models.Todo]
+// @Failure 400 {object} apiUtils.ErrorResponse
+// @Failure 500 {object} apiUtils.ErrorResponse
 // @Router /todos [post]
 // @Security ApiKeyAuth
 func (h *TodoHandler) CreateTodo(c *fiber.Ctx) error {
 	var todo models.Todo
 	if err := c.BodyParser(&todo); err != nil {
 		log.Error().Err(err).Msg("Failed to parse request body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Cannot parse JSON", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		errorResponse := apiUtils.CreateErrorResponse(err.Error(), fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	if err := h.service.CreateTodo(&todo); err != nil {
 		log.Error().Err(err).Msg("Failed to create todo")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create todo",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Failed to create todo", fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Todo created successfully",
-		"todo":    todo,
-	})
+	response := apiUtils.CreateResponse[models.Todo](todo)
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 // GetTodoByID retrieves a todo item by ID
@@ -82,36 +77,34 @@ func (h *TodoHandler) CreateTodo(c *fiber.Ctx) error {
 // @Tags Todos
 // @Produce json
 // @Param id path int true "Todo ID"
-// @Success 200 {object} models.Todo
-// @Failure 400 {object} fiber.Map
-// @Failure 404 {object} fiber.Map
-// @Failure 500 {object} fiber.Map
+// @Success 200 {object} apiUtils.Response[models.Todo]
+// @Failure 400 {object} apiUtils.ErrorResponse
+// @Failure 404 {object} apiUtils.ErrorResponse
+// @Failure 500 {object} apiUtils.ErrorResponse
 // @Router /todos/{id} [get]
 // @Security ApiKeyAuth
 func (h *TodoHandler) GetTodoByID(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		log.Warn().Msg("Invalid ID parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Invalid ID", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	todo, err := h.service.GetTodoByID(uint(id))
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			log.Warn().Uint("id", uint(id)).Msg("Todo not found")
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "Todo not found",
-			})
+			errorResponse := apiUtils.CreateErrorResponse("Todo not found", fiber.StatusNotFound)
+			return c.Status(fiber.StatusNotFound).JSON(errorResponse)
 		}
 		log.Error().Err(err).Msg("Failed to retrieve todo")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve todo",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Failed to retrieve todo", fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 	}
 
-	return c.JSON(todo)
+	response := apiUtils.CreateResponse[models.Todo](todo)
+	return c.JSON(response)
 }
 
 // UpdateTodo updates an existing todo item
@@ -121,72 +114,64 @@ func (h *TodoHandler) GetTodoByID(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path int true "Todo ID"
 // @Param todo body models.Todo true "Todo item"
-// @Success 200 {object} models.Todo
-// @Failure 400 {object} fiber.Map
-// @Failure 500 {object} fiber.Map
+// @Success 200 {object} apiUtils.Response[models.Todo]
+// @Failure 400 {object} apiUtils.ErrorResponse
+// @Failure 500 {object} apiUtils.ErrorResponse
 // @Router /todos/{id} [put]
 // @Security ApiKeyAuth
 func (h *TodoHandler) UpdateTodo(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		log.Warn().Msg("Invalid ID parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Invalid ID", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	var todo models.Todo
 	if err := c.BodyParser(&todo); err != nil {
 		log.Error().Err(err).Msg("Failed to parse request body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Cannot parse JSON", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	if err := h.validate.Struct(&todo); err != nil {
 		log.Warn().Err(err).Msg("Validation failed")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		errorResponse := apiUtils.CreateErrorResponse(err.Error(), fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	todo.ID = uint(id)
 	if err := h.service.UpdateTodo(&todo); err != nil {
 		log.Error().Err(err).Msg("Failed to update todo")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update todo",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Failed to update todo", fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "Todo updated successfully",
-		"todo":    todo,
-	})
+	response := apiUtils.CreateResponse[models.Todo](todo)
+	return c.JSON(response)
 }
 
 // DeleteTodo deletes a todo item
 // @Summary Delete a todo
 // @Tags Todos
 // @Param id path int true "Todo ID"
-// @Success 204
-// @Failure 400 {object} fiber.Map
-// @Failure 500 {object} fiber.Map
+// @Success 204 "No Content"
+// @Failure 400 {object} apiUtils.ErrorResponse
+// @Failure 500 {object} apiUtils.ErrorResponse
 // @Router /todos/{id} [delete]
 // @Security ApiKeyAuth
 func (h *TodoHandler) DeleteTodo(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		log.Warn().Msg("Invalid ID parameter")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Invalid ID", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	if err := h.service.DeleteTodo(uint(id)); err != nil {
 		log.Error().Err(err).Msg("Failed to delete todo")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete todo",
-		})
+		errorResponse := apiUtils.CreateErrorResponse("Failed to delete todo", fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -194,13 +179,14 @@ func (h *TodoHandler) DeleteTodo(c *fiber.Ctx) error {
 
 // ListTodos retrieves all todo items with pagination
 // @Summary Get all todos
+// @Description Get a paginated list of todos
 // @Tags Todos
 // @Produce json
-// @Param page query int false "Page number" default(1)
-// @Param page_size query int false "Page size" default(10)
-// @Success 200 {object} utils.PagedResponse[models.Todo]
-// @Failure 400 {object} fiber.Map
-// @Failure 500 {object} fiber.Map
+// @Param page query int false "Page number" default(1) minimum(1)
+// @Param page_size query int false "Page size" default(10) minimum(1) maximum(100)
+// @Success 200 {object} apiUtils.Response[[]models.Todo]
+// @Failure 400 {object} apiUtils.ErrorResponse
+// @Failure 500 {object} apiUtils.ErrorResponse
 // @Router /todos [get]
 // @Security ApiKeyAuth
 func (h *TodoHandler) ListTodos(c *fiber.Ctx) error {
@@ -209,17 +195,20 @@ func (h *TodoHandler) ListTodos(c *fiber.Ctx) error {
 
 	// Validate page and page_size
 	if page < 1 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid page number"})
+		errorResponse := apiUtils.CreateErrorResponse("Invalid page number", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 	if pageSize < 1 || pageSize > 100 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid page size"})
+		errorResponse := apiUtils.CreateErrorResponse("Invalid page size", fiber.StatusBadRequest)
+		return c.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	todos, total, err := h.service.ListTodos(page, pageSize)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch todos"})
+		errorResponse := apiUtils.CreateErrorResponse("Failed to fetch todos", fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).JSON(errorResponse)
 	}
 
-	response := apiUtils.CreatePagedResponse(c, todos, page, pageSize, total)
+	response := apiUtils.CreateResponse[[]models.Todo](todos, page, pageSize, int(total))
 	return c.JSON(response)
 }

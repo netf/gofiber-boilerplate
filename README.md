@@ -1,5 +1,8 @@
 # Golang Fiber Boilerplate
 
+[![CI](https://github.com/yourusername/your-repo-name/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/your-repo-name/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/your-repo-name)](https://goreportcard.com/report/github.com/yourusername/your-repo-name)
+
 This is a boilerplate for building RESTful APIs using Golang and the Fiber web framework. It includes a basic Todo application structure with database integration, JWT authentication, and Swagger documentation.
 
 ## Features
