@@ -7,7 +7,6 @@ import (
 )
 
 // Todo represents a task to be done.
-// swagger:model
 type Todo struct {
 	// The ID of the todo item.
 	// example: 1

@@ -10,7 +10,7 @@ type TodoService interface {
 	GetTodoByID(id uint) (*models.Todo, error)
 	UpdateTodo(todo *models.Todo) error
 	DeleteTodo(id uint) error
-	ListTodos() ([]models.Todo, error)
+	ListTodos(page, pageSize int) ([]models.Todo, int64, error)
 }
 
 type todoService struct {
@@ -37,6 +37,6 @@ func (s *todoService) DeleteTodo(id uint) error {
 	return s.repo.Delete(id)
 }
 
-func (s *todoService) ListTodos() ([]models.Todo, error) {
-	return s.repo.List()
+func (s *todoService) ListTodos(page, pageSize int) ([]models.Todo, int64, error) {
+	return s.repo.List(page, pageSize)
 }

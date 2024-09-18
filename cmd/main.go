@@ -81,9 +81,6 @@ func main() {
 		DeepLinking: false,
 	}))
 
-	// Health check endpoint
-	// app.Get("/health", handlers.HealthCheck)
-
 	// Graceful shutdown
 	go func() {
 		quit := make(chan os.Signal, 1)

@@ -11,7 +11,7 @@ type TodoRepository interface {
 	GetByID(id uint) (*models.Todo, error)
 	Update(todo *models.Todo) error
 	Delete(id uint) error
-	List() ([]models.Todo, error)
+	List(page, pageSize int) ([]models.Todo, int64, error)
 }
 
 type todoRepository struct {
@@ -40,8 +40,17 @@ func (r *todoRepository) Delete(id uint) error {
 	return r.db.Delete(&models.Todo{}, id).Error
 }
 
-func (r *todoRepository) List() ([]models.Todo, error) {
+func (r *todoRepository) List(page, pageSize int) ([]models.Todo, int64, error) {
 	var todos []models.Todo
-	err := r.db.Find(&todos).Error
-	return todos, err
+	var total int64
+
+	offset := (page - 1) * pageSize
+
+	err := r.db.Model(&models.Todo{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.Offset(offset).Limit(pageSize).Find(&todos).Error
+	return todos, total, err
 }

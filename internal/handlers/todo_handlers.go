@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/netf/gofiber-boilerplate/internal/models"
 	"github.com/netf/gofiber-boilerplate/internal/services"
+	"github.com/netf/gofiber-boilerplate/internal/types"
 )
 
 // Package handlers contains the HTTP handlers for the API
@@ -191,22 +193,41 @@ func (h *TodoHandler) DeleteTodo(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// ListTodos retrieves all todo items
+// ListTodos retrieves all todo items with pagination
 // @Summary Get all todos
 // @Tags Todos
 // @Produce json
-// @Success 200 {array} models.Todo
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Page size" default(10)
+// @Success 200 {object} PaginatedTodoResponse
+// @Failure 400 {object} fiber.Map
 // @Failure 500 {object} fiber.Map
 // @Router /todos [get]
 // @Security ApiKeyAuth
 func (h *TodoHandler) ListTodos(c *fiber.Ctx) error {
-	todos, err := h.service.ListTodos()
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to list todos")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to list todos",
-		})
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 10)
+
+	// Validate page and page_size
+	if page < 1 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid page number"})
+	}
+	if pageSize < 1 || pageSize > 100 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid page size"})
 	}
 
-	return c.JSON(todos)
+	todos, total, err := h.service.ListTodos(page, pageSize)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch todos"})
+	}
+
+	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
+
+	return c.JSON(types.PagedResponse[models.Todo]{
+		Data:       todos,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalItems: total,
+		TotalPages: totalPages,
+	})
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/netf/gofiber-boilerplate/internal/models"
+	"github.com/netf/gofiber-boilerplate/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
@@ -39,9 +40,9 @@ func (m *MockTodoService) DeleteTodo(id uint) error {
 	return args.Error(0)
 }
 
-func (m *MockTodoService) ListTodos() ([]models.Todo, error) {
-	args := m.Called()
-	return args.Get(0).([]models.Todo), args.Error(1)
+func (m *MockTodoService) ListTodos(page, pageSize int) ([]models.Todo, int64, error) {
+	args := m.Called(page, pageSize)
+	return args.Get(0).([]models.Todo), args.Get(1).(int64), args.Error(2)
 }
 
 func TestCreateTodo(t *testing.T) {
@@ -148,17 +149,98 @@ func TestListTodos(t *testing.T) {
 	app := fiber.New()
 	app.Get("/todos", handler.ListTodos)
 
-	todos := []models.Todo{
-		{ID: 1, Title: "Todo 1", Completed: false},
-		{ID: 2, Title: "Todo 2", Completed: true},
+	testCases := []struct {
+		name           string
+		query          string
+		expectedStatus int
+		mockTodos      []models.Todo
+		mockTotal      int64
+		mockError      error
+		setupMock      func(*MockTodoService)
+	}{
+		{
+			name:           "Success - Default Pagination",
+			query:          "",
+			expectedStatus: fiber.StatusOK,
+			mockTodos: []models.Todo{
+				{ID: 1, Title: "Todo 1", Completed: false},
+				{ID: 2, Title: "Todo 2", Completed: true},
+			},
+			mockTotal: 2,
+			mockError: nil,
+			setupMock: func(m *MockTodoService) {
+				m.On("ListTodos", 1, 10).Return([]models.Todo{
+					{ID: 1, Title: "Todo 1", Completed: false},
+					{ID: 2, Title: "Todo 2", Completed: true},
+				}, int64(2), nil)
+			},
+		},
+		{
+			name:           "Success - Custom Pagination",
+			query:          "?page=2&page_size=5",
+			expectedStatus: fiber.StatusOK,
+			mockTodos: []models.Todo{
+				{ID: 6, Title: "Todo 6", Completed: false},
+				{ID: 7, Title: "Todo 7", Completed: true},
+			},
+			mockTotal: 7,
+			mockError: nil,
+			setupMock: func(m *MockTodoService) {
+				m.On("ListTodos", 2, 5).Return([]models.Todo{
+					{ID: 6, Title: "Todo 6", Completed: false},
+					{ID: 7, Title: "Todo 7", Completed: true},
+				}, int64(7), nil)
+			},
+		},
+		{
+			name:           "Error - Invalid Page",
+			query:          "?page=0",
+			expectedStatus: fiber.StatusBadRequest,
+			setupMock:      func(m *MockTodoService) {}, // No mock setup needed for validation error
+		},
+		{
+			name:           "Error - Invalid Page Size",
+			query:          "?page_size=101",
+			expectedStatus: fiber.StatusBadRequest,
+			setupMock:      func(m *MockTodoService) {}, // No mock setup needed for validation error
+		},
+		{
+			name:           "Error - Service Failure",
+			query:          "",
+			expectedStatus: fiber.StatusInternalServerError,
+			setupMock: func(m *MockTodoService) {
+				m.On("ListTodos", 1, 10).Return([]models.Todo{}, int64(0), errors.New("service error"))
+			},
+		},
 	}
-	mockService.On("ListTodos").Return(todos, nil)
 
-	req := httptest.NewRequest("GET", "/todos", nil)
-	resp, _ := app.Test(req)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockService.ExpectedCalls = nil
+			mockService.Calls = nil
 
-	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
-	mockService.AssertExpectations(t)
+			if tc.setupMock != nil {
+				tc.setupMock(mockService)
+			}
+
+			req := httptest.NewRequest("GET", "/todos"+tc.query, nil)
+			resp, _ := app.Test(req)
+
+			assert.Equal(t, tc.expectedStatus, resp.StatusCode)
+
+			if tc.expectedStatus == fiber.StatusOK {
+				var result types.PagedResponse[models.Todo]
+				err := json.NewDecoder(resp.Body).Decode(&result)
+				assert.NoError(t, err)
+
+				assert.Equal(t, tc.mockTodos, result.Data)
+				assert.Equal(t, tc.mockTotal, result.TotalItems)
+				assert.Greater(t, result.TotalPages, 0)
+			}
+
+			mockService.AssertExpectations(t)
+		})
+	}
 }
 
 func TestCreateTodoError(t *testing.T) {
