@@ -68,6 +68,13 @@ make build
 
 ## API Endpoints
 
+### Authentication
+- `POST /api/v1/auth/register`: Register a new user
+- `POST /api/v1/auth/login`: User login
+- `POST /api/v1/auth/logout`: User logout
+- `POST /api/v1/auth/refresh`: Refresh JWT token
+
+### Todos
 - `POST /api/v1/todos`: Create a new todo
 - `GET /api/v1/todos`: List all todos
 - `GET /api/v1/todos/:id`: Get a specific todo
