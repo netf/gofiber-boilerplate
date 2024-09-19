@@ -14,11 +14,11 @@ import (
 )
 
 type AuthHandler struct {
-	authService *services.AuthService
+	authService services.AuthService
 	validate    *validator.Validate
 }
 
-func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+func NewAuthHandler(authService services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService, validate: validator.New()}
 }
 
@@ -78,7 +78,6 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(apiUtils.CreateErrorResponse("Invalid request body", fiber.StatusBadRequest))
 	}
 
-	// Add validation
 	if err := h.validate.Struct(register); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(apiUtils.CreateErrorResponse(err.Error(), fiber.StatusBadRequest))
 	}
@@ -122,7 +121,10 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 // @Failure 401 {object} apiUtils.ErrorResponse
 // @Router /auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
-	user := c.Locals("user").(*models.User)
+	user, ok := c.Locals("user").(*models.User)
+	if !ok || user == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(apiUtils.CreateErrorResponse("Invalid user", fiber.StatusUnauthorized))
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES512, auth.Claims{
 		StandardClaims: jwt.StandardClaims{
@@ -134,7 +136,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 
 	ts, err := token.SignedString(auth.PrivateKey)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(apiUtils.CreateErrorResponse("Could not refresh token", fiber.StatusInternalServerError))
+		return c.Status(fiber.StatusInternalServerError).JSON(apiUtils.CreateErrorResponse("Could not generate token", fiber.StatusInternalServerError))
 	}
 
 	response := apiUtils.CreateResponse[models.RefreshTokenResponse](models.RefreshTokenResponse{Token: ts})

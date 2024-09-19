@@ -1,16 +1,11 @@
 package config
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/netf/gofiber-boilerplate/internal/errors"
-
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -18,18 +13,6 @@ var (
 	PrivateKey *ecdsa.PrivateKey
 	PwSalt     []byte
 )
-
-func InitAuth() error {
-	var err error
-	PrivateKey, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-	if err != nil {
-		return err
-	}
-
-	PwSalt = make([]byte, 32)
-	_, err = rand.Read(PwSalt)
-	return err
-}
 
 type Config struct {
 	ServerAddress  string
@@ -74,9 +57,6 @@ func LoadConfig() (*Config, error) {
 	if cfg.DatabaseURL == "" {
 		return nil, errors.New("DATABASE_URL is required but not set")
 	}
-
-	// We don't need to validate AuthPrivateKey and AuthSalt here
-	// as they will be generated if not provided
 
 	return cfg, nil
 }

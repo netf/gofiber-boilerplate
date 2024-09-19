@@ -9,16 +9,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthService struct {
-	authRepo *repositories.AuthRepository
+// AuthService defines the interface for authentication-related operations
+type AuthService interface {
+	AuthenticateUser(name, password string) (*models.User, error)
+	RegisterUser(name, password, email string) (*models.User, error)
 }
 
-func NewAuthService(authRepo *repositories.AuthRepository) *AuthService {
-	return &AuthService{authRepo: authRepo}
+// authService implements the AuthService interface
+type authService struct {
+	authRepo repositories.AuthRepository
 }
 
-func (s *AuthService) AuthenticateUser(name, password string) (*models.User, error) {
+// NewAuthService creates a new instance of AuthService
+func NewAuthService(authRepo repositories.AuthRepository) AuthService {
+	return &authService{authRepo: authRepo}
+}
 
+// AuthenticateUser authenticates a user with the given credentials
+func (s *authService) AuthenticateUser(name, password string) (*models.User, error) {
 	if name == "" || password == "" {
 		return nil, errors.New("username and password are required")
 	}
@@ -39,7 +47,7 @@ func (s *AuthService) AuthenticateUser(name, password string) (*models.User, err
 }
 
 // RegisterUser creates a new user account
-func (s *AuthService) RegisterUser(name, password, email string) (*models.User, error) {
+func (s *authService) RegisterUser(name, password, email string) (*models.User, error) {
 	// Check if user already exists
 	existingUser, err := s.authRepo.FindUserByName(name)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {

@@ -27,7 +27,7 @@ func RegisterRoutes(router fiber.Router, db *gorm.DB, cfg *config.Config) {
 
 	// Auth routes
 	authRepo := repositories.NewAuthRepository(db)
-	authService := services.NewAuthService(authRepo)
+	authService := services.NewAuthService(*authRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 
 	authRoutes := router.Group("/auth")

@@ -8,6 +8,5 @@ var (
 	ErrInvalidInput       = New("invalid input")
 	ErrUnauthorized       = New("unauthorized")
 	ErrInternalServer     = New("internal server error")
-	ErrDatabaseOperation  = New("database operation error")
 	ErrUserNotFound       = New("user not found")
 )
