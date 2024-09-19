@@ -47,3 +47,7 @@ docs/docs.go
 
 # Docker volumes
 postgres_data/
+
+# Auth keys
+auth_private_key.pem
+auth_salt.txt
