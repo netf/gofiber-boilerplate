@@ -1,4 +1,4 @@
-.PHONY: build run migrate-up migrate-down test clean swag docker-build docker-run docker-up docker-down setup-pre-commit
+.PHONY: build run migrate-up migrate-down test clean swag docker-build docker-run docker-up docker-down setup-pre-commit generate-auth-keys
 
 build: swag
 	go build -o ./bin/app ./cmd/main.go
@@ -40,3 +40,15 @@ docker-down:
 setup-pre-commit:
 	pip install pre-commit
 	pre-commit install
+
+generate-auth-keys:
+	@echo "Generating ECDSA private key..."
+	@openssl ecparam -name prime256v1 -genkey -noout -out auth_private_key.pem
+	@echo "Private key generated and saved as auth_private_key.pem"
+	@echo "Generating salt..."
+	@openssl rand -base64 32 > auth_salt.txt
+	@echo "Salt generated and saved as auth_salt.txt"
+	@echo "Please store these securely and never commit them to version control."
+	@echo "You can use these values in your .env file or as environment variables:"
+	@echo "AUTH_PRIVATE_KEY=\$$(cat auth_private_key.pem | base64 -w 0)"
+	@echo "AUTH_SALT=\$$(cat auth_salt.txt)"

@@ -15,8 +15,11 @@ services:
       - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - SENTRY_DSN=${SENTRY_DSN:-}
+      - AUTH_PRIVATE_KEY=${AUTH_PRIVATE_KEY}
+      - AUTH_SALT=${AUTH_SALT}
     volumes:
       - ../:/app
+      - auth_keys:/app/auth_keys
     command: air -c .air.toml
   db:
     image: postgres:14
@@ -31,3 +34,4 @@ services:
 
 volumes:
   postgres_data:
+  auth_keys:

@@ -32,12 +32,13 @@ func InitAuth() error {
 }
 
 type Config struct {
-	ServerAddress string
-	DatabaseURL   string
-	JWTSecret     string
-	LogLevel      string
-	SentryDSN     string
-	Environment   string
+	ServerAddress  string
+	DatabaseURL    string
+	LogLevel       string
+	SentryDSN      string
+	Environment    string
+	AuthPrivateKey string
+	AuthSalt       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -60,12 +61,13 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServerAddress: viper.GetString("SERVER_ADDRESS"),
-		DatabaseURL:   viper.GetString("DATABASE_URL"),
-		JWTSecret:     viper.GetString("JWT_SECRET"),
-		LogLevel:      viper.GetString("LOG_LEVEL"),
-		SentryDSN:     viper.GetString("SENTRY_DSN"),
-		Environment:   viper.GetString("ENVIRONMENT"),
+		ServerAddress:  viper.GetString("SERVER_ADDRESS"),
+		DatabaseURL:    viper.GetString("DATABASE_URL"),
+		LogLevel:       viper.GetString("LOG_LEVEL"),
+		SentryDSN:      viper.GetString("SENTRY_DSN"),
+		Environment:    viper.GetString("ENVIRONMENT"),
+		AuthPrivateKey: viper.GetString("AUTH_PRIVATE_KEY"),
+		AuthSalt:       viper.GetString("AUTH_SALT"),
 	}
 
 	// Validate essential configurations
@@ -73,9 +75,8 @@ func LoadConfig() (*Config, error) {
 		return nil, errors.New("DATABASE_URL is required but not set")
 	}
 
-	if cfg.JWTSecret == "" {
-		return nil, errors.New("JWT_SECRET is required but not set")
-	}
+	// We don't need to validate AuthPrivateKey and AuthSalt here
+	// as they will be generated if not provided
 
 	return cfg, nil
 }
