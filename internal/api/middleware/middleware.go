@@ -5,12 +5,15 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/netf/gofiber-boilerplate/internal/api/auth"
+	"github.com/netf/gofiber-boilerplate/internal/api/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -115,4 +118,33 @@ func RateLimiter() fiber.Handler {
 
 func RequestID() fiber.Handler {
 	return requestid.New()
+}
+
+func JWTAuth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		authHeader := c.Get("Authorization")
+		if authHeader == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateErrorResponse("Missing authorization header", fiber.StatusUnauthorized))
+		}
+
+		tokenString := authHeader[7:] // Remove "Bearer " prefix
+
+		token, err := jwt.ParseWithClaims(tokenString, &auth.Claims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return &auth.PrivateKey.PublicKey, nil
+		})
+
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateErrorResponse("Invalid token", fiber.StatusUnauthorized))
+		}
+
+		if claims, ok := token.Claims.(*auth.Claims); ok && token.Valid {
+			c.Locals("claims", claims)
+			return c.Next()
+		}
+
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateErrorResponse("Invalid claims", fiber.StatusUnauthorized))
+	}
 }

@@ -87,7 +87,6 @@ For detailed API documentation, refer to the Swagger UI.
   - `models/`: Data models
   - `repositories/`: Data access layer
   - `services/`: Business logic
-  - `validators/`: Request validation
 - `docs/`: Swagger documentation
 - `migrations/`: Database migration files
 - `docker/`: Docker-related files

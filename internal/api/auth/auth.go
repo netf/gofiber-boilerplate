@@ -1,20 +1,31 @@
 package auth
 
 import (
-	"github.com/gofiber/fiber/v2"
-	jwt "github.com/gofiber/jwt/v3"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
-func JWTProtected(secret string) fiber.Handler {
-	return jwt.New(jwt.Config{
-		SigningKey:   []byte(secret),
-		ContextKey:   "user",
-		ErrorHandler: jwtError,
-	})
+var (
+	PrivateKey *ecdsa.PrivateKey
+	PwSalt     []byte
+)
+
+type Claims struct {
+	jwt.StandardClaims
+	Special string `json:"spc,omitempty"`
 }
 
-func jwtError(c *fiber.Ctx, err error) error {
-	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-		"error": "Unauthorized",
-	})
+func InitAuth() error {
+	var err error
+	PrivateKey, err = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	PwSalt = make([]byte, 32)
+	_, err = rand.Read(PwSalt)
+	return err
 }

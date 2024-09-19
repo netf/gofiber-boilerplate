@@ -2,9 +2,9 @@
 # https://github.com/cosmtrek/air
 
 [build]
-  cmd = "go build -o ./bin/air-app cmd/main.go"
+  cmd = "go build -o ./bin/air-app ./cmd/main.go"
   bin = "./bin/air-app"
-  full_bin = "./bin/air-app"
+  full_bin = "./bin/air-app start"
   exclude_dir = ["docs", "docker", "migrations"]
   exclude_file = ["*.md"]
 

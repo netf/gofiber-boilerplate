@@ -6,26 +6,26 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - '8080:8080'
+      - '${SERVER_PORT:-8080}:${SERVER_PORT:-8080}'
     depends_on:
       - db
     environment:
-      - DATABASE_URL=postgres://user:password@db:5432/todo_db?sslmode=disable
-      - SERVER_ADDRESS=:8080
-      - JWT_SECRET=your_jwt_secret
-      - LOG_LEVEL=debug
-      - SENTRY_DSN=
+      - DATABASE_URL=${DATABASE_URL:-postgres://user:password@db:5432/todo_db?sslmode=disable}
+      - SERVER_ADDRESS=:${SERVER_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret}
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+      - SENTRY_DSN=${SENTRY_DSN:-}
     volumes:
       - ../:/app
     command: air -c .air.toml
   db:
     image: postgres:14
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=todo_db
+      - POSTGRES_USER=${DB_USER:-user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-todo_db}
     ports:
-      - '5432:5432'
+      - '${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

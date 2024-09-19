@@ -1,16 +1,19 @@
-.PHONY: build run migrate-up migrate-down test clean swag docker-build docker-run docker-up docker-down
+.PHONY: build run migrate-up migrate-down test clean swag docker-build docker-run docker-up docker-down setup-pre-commit
 
 build: swag
 	go build -o ./bin/app ./cmd/main.go
 
 run: build
-	./bin/golang-fiber-boilerplate
+	./bin/app start
 
 migrate-up:
-	migrate -database $(DATABASE_URL) -path migrations up
+	go run cmd/main.go migrate up
 
 migrate-down:
-	migrate -database $(DATABASE_URL) -path migrations down
+	go run cmd/main.go migrate down
+
+migrate-create:
+	migrate create -ext sql -dir migrations -seq $(name)
 
 swag:
 	which swag || go install github.com/swaggo/swag/cmd/swag@latest
