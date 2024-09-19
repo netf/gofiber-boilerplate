@@ -81,9 +81,12 @@ For detailed API documentation, refer to the Swagger UI.
 - `cmd/`: Application entry point
 - `config/`: Configuration management
 - `internal/`: Internal application code
+  - `api/`: API-related code
+    - `handlers/`: HTTP request handlers
+    - `middleware/`: Custom middleware
+    - `routes/`: API route definitions
+    - `utils/`: API utility functions
   - `db/`: Database connection and migrations
-  - `handlers/`: HTTP request handlers
-  - `middleware/`: Custom middleware
   - `models/`: Data models
   - `repositories/`: Data access layer
   - `services/`: Business logic
